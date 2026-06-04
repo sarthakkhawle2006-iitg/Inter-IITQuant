@@ -1,15 +1,15 @@
-# Algorithmic Strategy Development on Multi-Feature Time Series 
-### Inter IIT Tech Meet 14.0 - High-Frequency Trading Challenge
+# Intraday Algorithmic Trading using Reinforcement Learning
+### Inter-IIT Tech Meet 14.0 — High-Frequency Trading Challenge
 
-### Note : The startegy returns depends on the random selection of days. In some combinations few days with very high return might get included (like day87 in EBX and day104 in EBY) resulting in higher returns in some runs, while lower in other runs in which these days are not included in testing. For different runs change the seed in PARAMS['SEED'] to get different results.
+> **Note:** Strategy returns depend on the random train/test day split. High-return days like Day 87 (EBX) and Day 104 (EBY) can significantly boost results when included in the test set. To get reproducible or varied results, adjust the random seed via `PARAMS['SEED']`.
 
-## 📈 Executive Summary
-This repository contains the source code for a robust **Reinforcement Learning (RL)** intraday trading strategy developed for the Inter IIT Tech Meet 14.0. The model leverages **Proximal Policy Optimization (PPO)** to navigate high-frequency market data, utilizing a rich state space of technical indicators, Heikin-Ashi structures, and adaptive volatility measures.
+## Overview
+This project implements an intraday **Reinforcement Learning (RL)** trading strategy for the Inter-IIT Tech Meet 14.0. The agent uses **Proximal Policy Optimization (PPO)** to learn trading decisions from high-frequency market data, driven by a feature-rich state space that includes technical indicators, Heikin-Ashi candlestick signals, and adaptive volatility filters.
 
-The strategy is rigorously evaluated on two distinct tickers, EBX and EBY, demonstrating highly profitable and robust performance profiles.
+The strategy was evaluated on two tickers — EBX and EBY — and delivered strong risk-adjusted returns across out-of-sample test periods.
 
-### 🏆 Performance Highlights
-The RL agent demonstrated exceptional risk-adjusted returns and stability in out-of-sample evaluations. According to the performance report, the strategy achieved the following metrics:
+### Backtested Performance
+The following metrics are from out-of-sample backtesting as reported in the team's performance report:
 
 | Metric | EBX (255 Days) | EBY (140 Days) |
 | :--- | :--- | :--- |
@@ -22,36 +22,36 @@ The RL agent demonstrated exceptional risk-adjusted returns and stability in out
 
 ---
 
-## 🧠 Strategy Architecture
+## How It Works
 
-### 1. Data Engineering
-* **Resampling:** Raw tick/second data is resampled into **2-minute candles** to capture meaningful market structure and reduce noise.
-* **Feature Space**:
-    * **Trend:** Heikin-Ashi transformations, Johnny Ribbon (Regime detection).
-    * **Momentum:** RSI, CCI, CMO, Aroon.
-    * **Volatility:** ATR, Standard Deviation, Chop Index.
-    * **Time Encoding:** Cyclical sine/cosine features for time-of-day awareness.
-    * **Adaptive Filters:** KAMA (Kaufman's Adaptive Moving Average).
+### 1. Data Pipeline
+* **Resampling:** Raw tick/second-level data is converted into **2-minute OHLC candles** to reduce microstructure noise while preserving intraday price action.
+* **Input Features:**
+    * **Trend:** Heikin-Ashi candle transformations, Johnny Ribbon for regime detection.
+    * **Momentum:** RSI, CCI, CMO, Aroon oscillators.
+    * **Volatility:** ATR, rolling Standard Deviation, Choppiness Index.
+    * **Time Encoding:** Cyclical sine/cosine encoding to capture time-of-day effects.
+    * **Adaptive Filter:** KAMA (Kaufman Adaptive Moving Average) for noise reduction.
 
-### 2. Reinforcement Learning (PPO)
-* **Agent:** PPO (Proximal Policy Optimization) using `stable-baselines3`.
-* **Policy:** `MlpPolicy` with a dual [256, 256] network architecture.
-* **Reward Function:** A custom shaped reward function incorporating:
-    * Realized PnL scaling.
-    * Penalties for stop-loss hits (`-100`) and end-of-day forced closures (`-10`).
-    * Bonuses for "waiting" to avoid over-trading in chop (`0.1`).
-* **Training:** Parallelized environments (`SubprocVecEnv`) with `VecNormalize` for stable convergence.
+### 2. PPO Agent Setup
+* **Algorithm:** Proximal Policy Optimization via `stable-baselines3`.
+* **Network:** `MlpPolicy` with two hidden layers of size [256, 256].
+* **Reward Design:** Custom shaped reward that includes:
+    * Scaling based on realized PnL.
+    * Stop-loss penalty: `-100`; forced end-of-day exit penalty: `-10`.
+    * Small bonus of `+0.1` for holding flat in choppy/uncertain conditions.
+* **Training Setup:** Multiple parallel environments using `SubprocVecEnv`, normalized with `VecNormalize` for training stability.
 
 ---
 
-## Quick Start 
-### Install Dependencies
+## Getting Started
+### Install Required Packages
 ```bash
 pip install numpy pandas gymnasium stable-baselines3 torch tqdm matplotlib
 ```
 
-### Prepare Data
-Place your raw tick data CSV files in a folder (e.g., `EBX/`) or Specify the dataset folder in the PARAMS['SOURCE_FOLDER'] in the code:
+### Data Setup
+Organize your raw tick CSV files under a ticker-named folder (e.g., `EBX/`) and set that path via `PARAMS['SOURCE_FOLDER']` in the script:
 ```
 EBX/
 ├── day1.csv
@@ -59,11 +59,11 @@ EBX/
 └── day3.csv
 ```
 
-## Commands Explained
+## Usage
 
-### Command 1: `python <Ticker>.py train`
+### Step 1 — Train the Model: `python <Ticker>.py train`
 
-**What Happens:**
+**Steps performed:**
 
 1. **Data Resampling** (2-3 mins)
    - Reads tick data from `EBX/` folder
@@ -90,9 +90,9 @@ EBX/
 
 ---
 
-### Command 2: `python <Ticker>.py test`
+### Step 2 — Run Backtests: `python <Ticker>.py test`
 
-**What Happens:**
+**Steps performed:**
 
 1. **Model Loading** 
    - Loads trained model from `Models_EBX/ppo_trading_model_EBX.zip`
@@ -125,9 +125,9 @@ EBX/
 
 ---
 
-### Command 3: `python <Ticker>.py test 123`
+### Step 3 — Test a Single Day: `python <Ticker>.py test 123`
 
-**What Happens:**
+**Steps performed:**
 
 1. **Specific Day Filtering** 
    - Searches for `day123` in test file list
@@ -136,9 +136,9 @@ EBX/
 
 ---
 
-### Command 4: `python <Ticker>.py backtest_ebullient`
+### Step 4 — Official Simulator Backtest: `python <Ticker>.py backtest_ebullient`
 
-**What Happens:**
+**Steps performed:**
 
 1. **Backtest Execution** 
    - Initializes BacktesterIIT with config
@@ -158,7 +158,7 @@ EBX/
 
 ---
 
-## Common Issues & Global Solutions
+## Troubleshooting
 
 ### Issue 1: "PARAMS mismatch between training and testing"
 **Problem:** You changed stop loss/trailing stop but didn't retrain
@@ -179,7 +179,7 @@ EBX/
 
 ---
 
-## File Checklist After Running
+## Expected Output Files
 
 ```
 After train:
@@ -200,17 +200,17 @@ After test:
 
 ---
 
-## 📊 Visual Analysis
+## Plots & Visualizations
 
-The strategy produces comprehensive visual diagnostics found in `test_trade_plots/` and `training_plots/`:
-* **Equity Curves:** Visual confirmation of steady capital growth.
-* **Drawdown Charts:** Monitoring of risk depth and duration.
-* **Trade Visualization:** Candlestick charts overlayed with Entry/Exit points for every test day.
-* **Training Metrics:** Entropy loss and Explained Variance plots to verify convergence.
+The following plots are auto-generated and saved to `test_trade_plots/` and `training_plots/`:
+* **Equity Curves:** Tracks cumulative portfolio value over the test period.
+* **Drawdown Charts:** Shows peak-to-trough loss at each point in time.
+* **Trade Charts:** Per-day candlestick charts with BUY/SELL/EXIT markers overlaid.
+* **Training Diagnostics:** Entropy loss and explained variance to assess model convergence.
 
 ---
 
-## 📜 Requirements
+## Requirements
 
 * Python 3.8+
 * `numpy`
